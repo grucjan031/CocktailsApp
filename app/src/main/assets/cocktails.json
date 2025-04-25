@@ -1,14 +1,224 @@
 [
   {
-    "name": "Mojito",
-    "ingredients": ["Mięta", "Limonka", "Rum", "Cukier trzcinowy", "Woda gazowana"],
-    "description": "Ugnieć limonkę i miętę z cukrem, dodaj rum i wodę gazowaną.",
+    "name": "Tropikalna Bryza",
+    "ingredients": [
+      "50 ml rumu",
+      "100 ml soku ananasowego",
+      "30 ml śmietanki kokosowej",
+      "10 ml soku z limonki"
+    ],
+    "description": "Wstrząśnij wszystkie składniki z lodem i przecedź do schłodzonej szklanki.",
+    "timerSeconds": 45
+  },
+  {
+    "name": "Jagodowa Infuzja",
+    "ingredients": [
+      "40 ml wódki",
+      "60 ml soku żurawinowego",
+      "30 ml syropu malinowego",
+      "Świeże jagody"
+    ],
+    "description": "Rozgnieć świeże jagody, dodaj pozostałe składniki; wypełnij lodem i delikatnie zamieszaj.",
+    "timerSeconds": 60
+  },
+  {
+    "name": "Zachodzący Poncz",
+    "ingredients": [
+      "40 ml tequili",
+      "80 ml soku pomarańczowego",
+      "10 ml grenadyny",
+      "Plasterek pomarańczy"
+    ],
+    "description": "Wlej składniki do szkła z lodem; powoli wlej grenadynę, aby opadła na dno. Udekoruj plasterkiem pomarańczy.",
+    "timerSeconds": 80
+  },
+  {
+    "name": "Miętowa Świeżość",
+    "ingredients": [
+      "60 ml ginu",
+      "25 ml soku z cytryny",
+      "20 ml syropu cukrowego",
+      "6 liści mięty"
+    ],
+    "description": "Delikatnie rozgnieć miętę. Wstrząśnij wszystkie składniki z lodem; przecedź i udekoruj gałązką mięty.",
     "timerSeconds": 30
   },
   {
-    "name": "Tequila Sunrise",
-    "ingredients": ["Tequila", "Sok pomarańczowy", "Grenadyna"],
-    "description": "Wymieszaj tequilę i sok, na koniec dodaj grenadynę.",
-    "timerSeconds": 15
+    "name": "Musujący Hibiskus",
+    "ingredients": [
+      "20 ml syropu hibiskusowego",
+      "30 ml likieru z kwiatów bzu",
+      "60 ml wina musującego",
+      "Kwiat hibiskusa (opcjonalnie)"
+    ],
+    "description": "Wlej syrop hibiskusowy i likier do kieliszka typu flet, następnie dopełnij winem musującym.",
+    "timerSeconds": 75
+  },
+  {
+    "name": "Ogórkowy Twist",
+    "ingredients": [
+      "35 ml ginu",
+      "15 ml soku z limonki",
+      "15 ml syropu cukrowego",
+      "3 plasterki ogórka"
+    ],
+    "description": "Rozgnieć plasterki ogórka, dodaj gin, sok z limonki i syrop; wstrząśnij dobrze i przecedź na świeży lód.",
+    "timerSeconds": 45
+  },
+  {
+    "name": "Lawendowy Sen",
+    "ingredients": [
+      "30 ml wódki",
+      "30 ml likieru lawendowego",
+      "50 ml lemoniady",
+      "Gałązka lawendy"
+    ],
+    "description": "Wymieszaj składniki z lodem. Udekoruj gałązką lawendy.",
+    "timerSeconds": 60
+  },
+  {
+    "name": "Kokosowy Fizz",
+    "ingredients": [
+      "40 ml rumu",
+      "40 ml mleka kokosowego",
+      "80 ml wody gazowanej",
+      "10 ml soku z limonki"
+    ],
+    "description": "Połącz rum, mleko kokosowe i sok z limonki; wstrząśnij z lodem. Dopełnij wodą gazowaną w wysokiej szklance.",
+    "timerSeconds": 90
+  },
+  {
+    "name": "Grejpfrutowy Spritz",
+    "ingredients": [
+      "30 ml Aperolu",
+      "40 ml soku grejpfrutowego",
+      "60 ml wody gazowanej",
+      "Cząstka grejpfruta"
+    ],
+    "description": "Wlej składniki do kieliszka z lodem i delikatnie zamieszaj; udekoruj cząstką grejpfruta.",
+    "timerSeconds": 45
+  },
+  {
+    "name": "Miodowy Bourbon Sour",
+    "ingredients": [
+      "50 ml bourbona",
+      "25 ml soku z cytryny",
+      "15 ml syropu miodowego",
+      "Białko jajka (opcjonalnie)"
+    ],
+    "description": "Wstrząśnij „na sucho” wszystkie składniki (w tym białko, jeśli używasz), następnie dodaj lód i wstrząśnij ponownie. Przecedź do szklanki.",
+    "timerSeconds": 60
+  },
+  {
+    "name": "Ostrzejszy Jabłkowy Mule",
+    "ingredients": [
+      "40 ml wódki",
+      "60 ml cydru jabłkowego",
+      "10 ml soku z limonki",
+      "Piwo imbirowe",
+      "Szczypta cynamonu"
+    ],
+    "description": "Wymieszaj wódkę, cydr i sok z limonki z lodem; dopełnij piwem imbirowym i posyp odrobiną cynamonu.",
+    "timerSeconds": 70
+  },
+  {
+    "name": "Mango Chwała",
+    "ingredients": [
+      "50 ml rumu",
+      "75 ml soku z mango",
+      "10 ml soku z limonki",
+      "Kropla gorzkich kropli (bitters)"
+    ],
+    "description": "Wstrząśnij wszystkie składniki z lodem i przecedź do szklanki typu highball. Udekoruj plasterkiem limonki.",
+    "timerSeconds": 45
+  },
+  {
+    "name": "Rozmarynowa Paloma",
+    "ingredients": [
+      "40 ml tequili",
+      "80 ml soku grejpfrutowego",
+      "20 ml soku z limonki",
+      "10 ml syropu cukrowego",
+      "Gałązka rozmarynu"
+    ],
+    "description": "Zrób obręcz z użyciem soli lub cukru. Wstrząśnij składniki z lodem; udekoruj gałązką rozmarynu.",
+    "timerSeconds": 60
+  },
+  {
+    "name": "Czekoladowe Martini",
+    "ingredients": [
+      "40 ml wódki",
+      "30 ml likieru czekoladowego",
+      "20 ml śmietanki",
+      "Tarta czekolada"
+    ],
+    "description": "Wstrząśnij z lodem, aż się schłodzi. Przecedź do kieliszka koktajlowego; posyp startą czekoladą.",
+    "timerSeconds": 90
+  },
+  {
+    "name": "Bazyliowy Smash",
+    "ingredients": [
+      "50 ml ginu",
+      "20 ml soku z cytryny",
+      "20 ml syropu cukrowego",
+      "5 liści bazylii"
+    ],
+    "description": "Rozgnieć bazylię; dodaj pozostałe składniki i mocno wstrząśnij z lodem. Przecedź do niskiej szklanki na lód.",
+    "timerSeconds": 45
+  },
+  {
+    "name": "Melonowa Bryza",
+    "ingredients": [
+      "30 ml rumu",
+      "30 ml Midori",
+      "50 ml soku ananasowego",
+      "10 ml soku z limonki"
+    ],
+    "description": "Wstrząśnij z lodem. Podawaj w schłodzonym naczyniu; udekoruj plastrem ananasa.",
+    "timerSeconds": 60
+  },
+  {
+    "name": "Brzoskwiniowy Poncz",
+    "ingredients": [
+      "40 ml wódki",
+      "30 ml likieru brzoskwiniowego (peach schnapps)",
+      "60 ml soku pomarańczowego",
+      "Odrobina grenadyny"
+    ],
+    "description": "Wlej składniki do szklanki z lodem i delikatnie zamieszaj. Na koniec dodaj odrobinę grenadyny.",
+    "timerSeconds": 80
+  },
+  {
+    "name": "Kardamonowa Ochłoda",
+    "ingredients": [
+      "40 ml ginu",
+      "20 ml soku z limonki",
+      "15 ml syropu kardamonowego",
+      "Woda tonik"
+    ],
+    "description": "Wymieszaj gin, sok z limonki i syrop kardamonowy w wysokiej szklance; wypełnij lodem i dopełnij tonikiem.",
+    "timerSeconds": 45
+  },
+  {
+    "name": "Ananasowa Jalapeño Rita",
+    "ingredients": [
+      "40 ml tequili",
+      "80 ml soku ananasowego",
+      "20 ml soku z limonki",
+      "2 plasterki jalapeño (rozgniecione)"
+    ],
+    "description": "Wstrząśnij z lodem i przecedź na świeży lód; udekoruj plasterkiem jalapeño.",
+    "timerSeconds": 70
+  },
+  {
+    "name": "Cynamonowe Old Fashioned",
+    "ingredients": [
+      "50 ml bourbona",
+      "1 kostka cukru",
+      "Kropla angostury (bitters)",
+      "Kropla bitters cynamonowego"
+    ],
+    "description": "Ugnieć kostkę cukru z bitters, dodaj bourbon i lód. Zamieszaj, aby schłodzić; udekoruj laską cynamonu.",
+    "timerSeconds": 45
   }
 ]
