@@ -59,8 +59,4 @@ class TimerViewModel : ViewModel() {
         _currentTime.value = newStartValue
     }
 
-    fun setTo60() {
-        pauseTimer()
-        _currentTime.value = 60
-    }
 }
