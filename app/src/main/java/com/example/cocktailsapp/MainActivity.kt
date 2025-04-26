@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.font.FontFamily
 
 class MainActivity : ComponentActivity() {
 
@@ -50,7 +53,13 @@ fun MainScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "CocktailsApp\uD83C\uDF79") }
+                title = { Text("CocktailsApp\ud83c\udf79",style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = FontFamily.Serif
+                    // Można użyć innego fontu, np. FontFamily.Monospace
+                ), color = MaterialTheme.colorScheme.onPrimary) },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             )
         }
     ) { paddingValues ->
