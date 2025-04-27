@@ -1,5 +1,6 @@
 package com.example.cocktailsapp
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -25,35 +26,149 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import coil.compose.AsyncImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.graphics.vector.ImageVector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.material.icons.filled.Search
+import com.google.gson.Gson
+import com.example.cocktailsapp.Cocktail
+import android.util.Log
 
+
+sealed class BottomNavItem(val route: String, val icon: ImageVector, val title: String) {
+    object Home : BottomNavItem("home", Icons.Default.Home, "Koktajle")
+    object Favorites : BottomNavItem("favorites", Icons.Default.Favorite, "Ulubione")
+    object Settings : BottomNavItem("settings", Icons.Default.Settings, "Ustawienia")
+}
+class FavoritesManager(context: Context) {
+    private val sharedPreferences = context.getSharedPreferences("favorites_prefs", Context.MODE_PRIVATE)
+
+    fun addFavorite(cocktail: Cocktail) {
+        val gson = Gson()
+        val editor = sharedPreferences.edit()
+        editor.putString(cocktail.name, gson.toJson(cocktail))
+        editor.apply()
+    }
+
+    fun removeFavorite(cocktail: Cocktail) {
+        val editor = sharedPreferences.edit()
+        editor.remove(cocktail.name)
+        editor.apply()
+    }
+
+    fun getFavorites(): List<Cocktail> {
+        val gson = Gson()
+        val favorites = mutableListOf<Cocktail>()
+
+        sharedPreferences.all.forEach { (_, value) ->
+            if (value is String) {
+                try {
+                    val cocktail = gson.fromJson(value, Cocktail::class.java)
+                    favorites.add(cocktail)
+                } catch (e: Exception) {
+                    Log.e("FavoritesManager", "Error parsing favorite", e)
+                }
+            }
+        }
+
+        return favorites
+    }
+
+    fun isFavorite(cocktail: Cocktail): Boolean {
+        return sharedPreferences.contains(cocktail.name)
+    }
+
+    fun toggleFavorite(cocktail: Cocktail): Boolean {
+        val isFavorite = isFavorite(cocktail)
+        if (isFavorite) {
+            removeFavorite(cocktail)
+        } else {
+            addFavorite(cocktail)
+        }
+        return !isFavorite
+    }
+}
 class MainActivity : ComponentActivity() {
     private val cocktailRepository = CocktailRepository()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             CocktailsAppTheme {
+                var selectedNavItem by remember { mutableStateOf<BottomNavItem>(BottomNavItem.Home) }
                 var cocktails by remember { mutableStateOf<List<Cocktail>>(emptyList()) }
                 var isLoading by remember { mutableStateOf(true) }
 
                 LaunchedEffect(key1 = true) {
                     isLoading = true
-                    // Pobierz drinki tylko z API, fallback do lokalnych tylko przy błędzie
                     cocktails = cocktailRepository.getRandomCocktails()
                     isLoading = false
                 }
 
-                if (isLoading) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                Scaffold(
+                    topBar = {
+                        CenterAlignedTopAppBar(
+                            title = { Text("CocktailsApp\ud83c\udf79", style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = FontFamily.Serif
+                            ), color = MaterialTheme.colorScheme.onPrimary) },
+                            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    },
+                    bottomBar = {
+                        NavigationBar {
+                            val navItems = listOf(
+                                BottomNavItem.Home,
+                                BottomNavItem.Favorites,
+                                BottomNavItem.Settings
+                            )
+                            navItems.forEach { item ->
+                                NavigationBarItem(
+                                    icon = { Icon(item.icon, contentDescription = item.title) },
+                                    label = { Text(item.title) },
+                                    selected = selectedNavItem == item,
+                                    onClick = { selectedNavItem = item }
+                                )
+                            }
+                        }
                     }
-                } else {
-                    MainScreen(cocktails) { selectedCocktail ->
-                        val intent = Intent(this@MainActivity, DetailsActivity::class.java)
-                        intent.putExtra("cocktailName", selectedCocktail.name)
-                        // Możesz dodać więcej danych do przesłania do Details
-                        startActivity(intent)
+                ) { paddingValues ->
+                    when (selectedNavItem) {
+                        BottomNavItem.Home -> {
+                            if (isLoading) {
+                                Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                                    CircularProgressIndicator(modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
+                                }
+                            } else {
+                                MainScreen(cocktails, paddingValues) { selectedCocktail ->
+                                    val intent = Intent(this@MainActivity, DetailsActivity::class.java)
+                                    intent.putExtra("cocktailName", selectedCocktail.name)
+                                    startActivity(intent)
+                                }
+                            }
+                        }
+                        BottomNavItem.Favorites -> {
+                            FavouritesScreen(paddingValues)
+
+                        }
+                        BottomNavItem.Settings -> {
+                            Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                                Text(
+                                    text = "Tutaj będą ustawienia",
+                                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -90,27 +205,84 @@ fun AssetImage(imagePath: String, contentDescription: String?, modifier: Modifie
 @Composable
 fun MainScreen(
     cocktailList: List<Cocktail>,
+    paddingValues: PaddingValues,
     onCocktailClick: (Cocktail) -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("CocktailsApp\ud83c\udf79", style = MaterialTheme.typography.titleLarge.copy(
-                    fontFamily = FontFamily.Serif
-                ), color = MaterialTheme.colorScheme.onPrimary) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+    val cocktailRepository = remember { CocktailRepository() }
+    var searchQuery by remember { mutableStateOf("") }
+    var searchResults by remember { mutableStateOf<List<Cocktail>>(cocktailList) }
+    var isSearching by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val favoritesManager = remember { FavoritesManager(context) }
+    var favoritesList by remember { mutableStateOf<List<Cocktail>>(emptyList()) }
+
+    LaunchedEffect(key1 = true) {
+        favoritesList = favoritesManager.getFavorites()
+    }
+
+    Column(
+        modifier = Modifier.padding(paddingValues)
+    ) {
+        // Wyszukiwarka
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { newQuery ->
+                searchQuery = newQuery
+                if (newQuery.isNotEmpty()) {
+                    isSearching = true
+
+                    // Uruchomienie wyszukiwania z użyciem rememberCoroutineScope
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val results = cocktailRepository.searchCocktails(context, newQuery)
+                        withContext(Dispatchers.Main) {
+                            searchResults = results
+                            isSearching = false
+                        }
+                    }
+                } else {
+                    searchResults = cocktailList
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            placeholder = { Text("Wyszukaj drinka...") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Szukaj") },
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
             )
+        )
+
+        // Wskaźnik ładowania podczas wyszukiwania
+        if (isSearching) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
+                )
+            }
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            items(cocktailList) { cocktail ->
+
+        LazyColumn {
+            items(if (searchQuery.isEmpty()) cocktailList else searchResults) { cocktail ->
+                val isFavorite = favoritesManager.isFavorite(cocktail)
                 CocktailListItem(
                     cocktail = cocktail,
-                    onClick = { onCocktailClick(cocktail) }
+                    onClick = { onCocktailClick(cocktail) },
+                    isFavorite = isFavorite,
+                    onFavoriteToggle = {
+                        favoritesManager.toggleFavorite(it)
+                        // Odświeżenie listy ulubionych
+                        favoritesList = favoritesManager.getFavorites()
+                    }
                 )
             }
         }
@@ -118,7 +290,12 @@ fun MainScreen(
 }
 
 @Composable
-fun CocktailListItem(cocktail: Cocktail, onClick: (Cocktail) -> Unit) {
+fun CocktailListItem(
+    cocktail: Cocktail,
+    onClick: (Cocktail) -> Unit,
+    isFavorite: Boolean,
+    onFavoriteToggle: (Cocktail) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -142,8 +319,25 @@ fun CocktailListItem(cocktail: Cocktail, onClick: (Cocktail) -> Unit) {
             Text(
                 text = cocktail.name,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .weight(1f)
             )
+
+            // Gwiazdka do oznaczania ulubionych
+            var currentFavoriteState by remember(cocktail.name) { mutableStateOf(isFavorite) }
+
+            IconButton(onClick = {
+                onFavoriteToggle(cocktail)
+                // Aktualizujemy stan lokalny natychmiast
+                currentFavoriteState = !currentFavoriteState
+            }) {
+                Icon(
+                    imageVector = if (currentFavoriteState) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = if (currentFavoriteState) "Usuń z ulubionych" else "Dodaj do ulubionych",
+                    tint = if (currentFavoriteState) Color.Red else Color.Gray
+                )
+            }
         }
     }
 }
