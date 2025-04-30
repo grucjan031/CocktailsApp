@@ -26,12 +26,18 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.graphics.Color
+import coil.compose.AsyncImage
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 
 private const val PREFS_NAME = "CocktailNotes"
 private const val NOTE_KEY_PREFIX = "note_"
@@ -112,6 +118,7 @@ fun DetailsScreen(
     timerViewModel: TimerViewModel
 ) {
     val context = LocalContext.current
+    var useTranslation by remember { mutableStateOf(false) }
     var notes by rememberSaveable { mutableStateOf(getNoteForCocktail(context, selectedCocktail.name)) }
     // Stan kontrolujący widoczność minutnika
     var isTimerVisible by rememberSaveable { mutableStateOf(false) }
@@ -141,16 +148,50 @@ fun DetailsScreen(
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
+                        // Dodajemy wyświetlanie obrazka
+                        selectedCocktail.imageUrl?.let { imageUrl ->
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = "Zdjęcie drinka ${selectedCocktail.name}",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(300.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
                         Text(text = "Nazwa: ${selectedCocktail.name}", style = MaterialTheme.typography.headlineSmall)
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(text = "Składniki:", style = MaterialTheme.typography.titleMedium)
-                        selectedCocktail.ingredients.forEach { ingr ->
-                            Text(text = "- $ingr", style = MaterialTheme.typography.bodyLarge)
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Używamy getLocalizedIngredients zamiast ingredients
+                        selectedCocktail.getLocalizedIngredients(useTranslation).forEach { ingr ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Circle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(8.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = ingr, style = MaterialTheme.typography.bodyLarge)
+                            }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(text = selectedCocktail.description, style = MaterialTheme.typography.bodyMedium)
+                        Text(text = "Przygotowanie:", style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        DrinkDescription(
+                            cocktail = selectedCocktail,
+                            onLanguageChanged = { newUseTranslation ->
+                                useTranslation = newUseTranslation
+                            }
+                        )
+
                         Spacer(modifier = Modifier.height(16.dp))
 
                         OutlinedTextField(
@@ -184,6 +225,50 @@ fun DetailsScreen(
         }
     }
 }
+
+@Composable
+fun DrinkDescription(cocktail: Cocktail, onLanguageChanged: (Boolean) -> Unit) {
+    var useTranslation by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Tekst opisu z przyciskiem flagi obok
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            // Tekst opisu
+            Text(
+                text = if (useTranslation && !cocktail.translatedDescription.isNullOrBlank())
+                    cocktail.translatedDescription!!
+                else
+                    cocktail.originalDescription,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Przycisk flagi tylko gdy jest dostępne tłumaczenie
+            if (!cocktail.translatedDescription.isNullOrBlank()) {
+                IconButton(
+                    onClick = {
+                        useTranslation = !useTranslation
+                        onLanguageChanged(useTranslation)
+                    },
+                    modifier = Modifier.padding(start = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = if (useTranslation)
+                            ImageVector.vectorResource(R.drawable.ic_flag_pl)
+                        else
+                            ImageVector.vectorResource(R.drawable.ic_flag_gb),
+                        contentDescription = if (useTranslation) "Zmień na angielski" else "Zmień na polski",
+                        tint = Color.Unspecified
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun TimerButton(
     icon: ImageVector,
@@ -206,6 +291,7 @@ fun TimerButton(
         )
     }
 }
+
 @Composable
 fun TimerComposable(
     timerViewModel: TimerViewModel,

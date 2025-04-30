@@ -3,11 +3,19 @@ package com.example.cocktailsapp
 data class Cocktail(
     val name: String,
     val ingredients: List<String>,
+    val originalIngredients: List<String>,
+    val translatedIngredients: List<String>,
     val description: String,
+    val originalDescription: String, // Dodane pole
+    val translatedDescription: String?, // Dodane pole
     val timerSeconds: Int?,
     val imagePath: String? = null,
     val imageUrl: String? = null
-)
+) {
+    fun getLocalizedIngredients(useTranslation: Boolean): List<String> {
+        return if (useTranslation) translatedIngredients else originalIngredients
+    }
+}
 
 data class CocktailDto(
     val idDrink: String,
@@ -69,26 +77,32 @@ data class CocktailDto(
         translatedDescription: String? = null,
         translatedIngredients: List<String>? = null
     ): Cocktail {
-        // Używamy przetłumaczonych składników jeśli są dostępne
-        val finalIngredients = translatedIngredients ?: collectIngredients()
+        // Oryginalne dane
+        val originalIngredients = collectIngredients()
+        val originalDescription = strInstructions ?: ""
 
-        // Używamy przetłumaczonego opisu jeśli jest dostępny
-        val finalDescription = translatedDescription ?: strInstructions ?: ""
+        // Uzupełnianie brakujących tłumaczeń
+        val finalIngredients = translatedIngredients?.mapIndexed { index, translated ->
+            val original = originalIngredients.getOrNull(index).orEmpty()
+            if (translated.isNullOrBlank()) {
+                original
+            } else if (original.isNotBlank() && !translated.contains(original)) {
+                "$translated ($original)"
+            } else {
+                translated
+            }
+        } ?: originalIngredients
 
         return Cocktail(
             name = strDrink,
             ingredients = finalIngredients,
-            description = finalDescription,
+            originalIngredients = originalIngredients,
+            translatedIngredients = finalIngredients,
+            description = translatedDescription ?: originalDescription,
+            originalDescription = originalDescription,
+            translatedDescription = translatedDescription,
             timerSeconds = null,
             imageUrl = strDrinkThumb
-        )
-    }
-
-    // Zachowanie oryginalnej metody dla kompatybilności wstecznej
-    fun toCocktail(): Cocktail {
-        return toCocktail(
-            translatedDescription = null,
-            translatedIngredients = null
         )
     }
 }

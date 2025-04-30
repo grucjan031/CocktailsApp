@@ -40,6 +40,8 @@ import androidx.compose.material.icons.filled.Search
 import com.google.gson.Gson
 import com.example.cocktailsapp.Cocktail
 import android.util.Log
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.ui.res.vectorResource
 
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val title: String) {
@@ -108,6 +110,14 @@ class MainActivity : ComponentActivity() {
                 var cocktails by remember { mutableStateOf<List<Cocktail>>(emptyList()) }
                 var isLoading by remember { mutableStateOf(true) }
 
+                val refreshCocktails = {
+                    isLoading = true
+                    CoroutineScope(Dispatchers.Main).launch {
+                        cocktails = cocktailRepository.getRandomCocktails()
+                        isLoading = false
+                    }
+                    Unit
+                }
                 LaunchedEffect(key1 = true) {
                     isLoading = true
                     cocktails = cocktailRepository.getRandomCocktails()
@@ -150,11 +160,16 @@ class MainActivity : ComponentActivity() {
                                     CircularProgressIndicator(modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
                                 }
                             } else {
-                                MainScreen(cocktails, paddingValues) { selectedCocktail ->
-                                    val intent = Intent(this@MainActivity, DetailsActivity::class.java)
-                                    intent.putExtra("cocktailName", selectedCocktail.name)
-                                    startActivity(intent)
-                                }
+                                MainScreen(
+                                    cocktailList = cocktails,
+                                    paddingValues = paddingValues,
+                                    onCocktailClick = { selectedCocktail ->
+                                        val intent = Intent(this@MainActivity, DetailsActivity::class.java)
+                                        intent.putExtra("cocktailName", selectedCocktail.name)
+                                        startActivity(intent)
+                                    },
+                                    onRefresh = refreshCocktails
+                                )
                             }
                         }
                         BottomNavItem.Favorites -> {
@@ -171,6 +186,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+
             }
         }
     }
@@ -206,7 +222,8 @@ fun AssetImage(imagePath: String, contentDescription: String?, modifier: Modifie
 fun MainScreen(
     cocktailList: List<Cocktail>,
     paddingValues: PaddingValues,
-    onCocktailClick: (Cocktail) -> Unit
+    onCocktailClick: (Cocktail) -> Unit,
+    onRefresh: () -> Unit
 ) {
     val cocktailRepository = remember { CocktailRepository() }
     var searchQuery by remember { mutableStateOf("") }
@@ -278,12 +295,46 @@ fun MainScreen(
                     cocktail = cocktail,
                     onClick = { onCocktailClick(cocktail) },
                     isFavorite = isFavorite,
-                    onFavoriteToggle = {
-                        favoritesManager.toggleFavorite(it)
+                    onFavoriteToggle = { cocktail ->
+                        favoritesManager.toggleFavorite(cocktail)
                         // Odświeżenie listy ulubionych
                         favoritesList = favoritesManager.getFavorites()
                     }
                 )
+            }
+
+            // Przycisk odświeżania na końcu listy
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clickable { onRefresh() },
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = "Odśwież listę",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Odśwież listę drinków",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                // Dodajemy padding na końcu listy
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

@@ -20,14 +20,20 @@ class CocktailRepository {
                 TranslationService.prepareTranslator()
                 response.drinks?.map { dto ->
                     Cocktail(
-                        name         = dto.strDrink,
-                        description  = TranslationService.translateText(dto.strInstructions)
+                        name                = dto.strDrink,
+                        description         = TranslationService.translateText(dto.strInstructions)
                             ?: dto.strInstructions.orEmpty(),
-                        ingredients  = dto.collectIngredients().map { ing ->
+                        originalDescription = dto.strInstructions.orEmpty(),
+                        translatedDescription = TranslationService.translateText(dto.strInstructions),
+                        ingredients         = dto.collectIngredients().map { ing ->
                             TranslationService.translateText(ing) ?: ing
                         },
-                        timerSeconds = 0,
-                        imageUrl     = dto.strDrinkThumb
+                        originalIngredients = dto.collectIngredients(),
+                        translatedIngredients = dto.collectIngredients().map { ing ->
+                            TranslationService.translateText(ing) ?: ing
+                        },
+                        timerSeconds        = 0,
+                        imageUrl            = dto.strDrinkThumb
                     )
                 } ?: emptyList()
             } catch (e: Exception) {
@@ -36,7 +42,7 @@ class CocktailRepository {
             }
         }
 
-    suspend fun getRandomCocktails(count: Int = 30): List<Cocktail> =
+    suspend fun getRandomCocktails(count: Int = 10): List<Cocktail> =
         withContext(Dispatchers.IO) {
             val cocktails = mutableListOf<Cocktail>()
             val seenIds = mutableSetOf<String>()
@@ -55,11 +61,15 @@ class CocktailRepository {
                                 TranslationService.translateText(ing) ?: ing
                             }
                             cocktails += Cocktail(
-                                name         = dto.strDrink,
-                                description  = desc,
-                                ingredients  = ings,
-                                timerSeconds = 0,
-                                imageUrl     = dto.strDrinkThumb
+                                name                = dto.strDrink,
+                                description         = desc,
+                                originalDescription = dto.strInstructions.orEmpty(),
+                                translatedDescription = TranslationService.translateText(dto.strInstructions),
+                                ingredients         = ings,
+                                originalIngredients = dto.collectIngredients(),
+                                translatedIngredients = ings,
+                                timerSeconds        = 0,
+                                imageUrl            = dto.strDrinkThumb
                             )
                         }
                 }.onFailure {
