@@ -1,10 +1,13 @@
 // W pliku `app/src/main/java/com/example/cocktailsapp/ui/theme/Theme.kt`
 package com.example.cocktailsapp.ui.theme
 
+import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFFD81B60),
@@ -24,12 +27,23 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun CocktailsAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colors = if (darkTheme) DarkColors else LightColors
+    val context = LocalContext.current
+    val sharedPrefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+
+    // Odczytaj wartość z SharedPreferences bez używania remember
+    // dzięki czemu każde renderowanie sprawdzi aktualny stan
+    val isDarkTheme = sharedPrefs.getBoolean("dark_mode", isSystemInDarkTheme())
+
+    val colorScheme = if (isDarkTheme) {
+        DarkColors
+    } else {
+        LightColors
+    }
+
     MaterialTheme(
-        colorScheme = colors,
+        colorScheme = colorScheme,
         typography = Typography,
         content = content
     )

@@ -2,6 +2,8 @@
 agp = "8.9.1"
 coilCompose = "2.4.0"
 converterGson = "2.9.0"
+foundation = "1.6.0"
+foundationPagerAndroid = "1.6.0"
 gson = "2.10.1"
 kotlin = "2.0.21"
 coreKtx = "1.16.0"
@@ -23,9 +25,13 @@ common = "18.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "foundation" }
+androidx-foundation-layout = { module = "androidx.compose.foundation:foundation-layout", version.ref = "foundation" }
+androidx-foundation-pager = { module = "androidx.compose.foundation:foundation-pager", version.ref = "foundation" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
+foundation-pager-android = { module = "androidx.compose.foundation:foundation-pager-android", version.ref = "foundationPagerAndroid" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -49,7 +55,7 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 retrofit2-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofit2KotlinxSerializationConverter" }
 translate = { module = "com.google.mlkit:translate", version.ref = "translate" }
 common = { group = "com.google.mlkit", name = "common", version.ref = "common" }
-
+androidx-foundation-pager-android = { group = "androidx.compose.foundation", name = "foundation-pager-android", version = "1.6.0" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

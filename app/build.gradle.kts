@@ -72,4 +72,6 @@ dependencies {
     implementation(libs.retrofit2.kotlinx.serialization.converter)
     implementation (libs.translate)
     implementation (libs.kotlinx.coroutines.play.services)
+    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.foundation.layout)
 }

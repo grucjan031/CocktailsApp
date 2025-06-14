@@ -1,48 +1,97 @@
 package com.example.cocktailsapp
-
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Switch
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.example.cocktailsapp.ui.theme.CocktailsAppTheme
-import android.graphics.BitmapFactory
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
-import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
-import kotlinx.coroutines.CoroutineScope
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
+import coil.compose.AsyncImage
+import com.example.cocktailsapp.ui.theme.CocktailsAppTheme
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.material.icons.filled.Search
-import com.google.gson.Gson
-import com.example.cocktailsapp.Cocktail
-import android.util.Log
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.ui.res.vectorResource
-
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val title: String) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Koktajle")
@@ -97,33 +146,62 @@ class FavoritesManager(context: Context) {
         return !isFavorite
     }
 }
+
+
 class MainActivity : ComponentActivity() {
     private val cocktailRepository = CocktailRepository()
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            CocktailsAppTheme {
-                var selectedNavItem by remember { mutableStateOf<BottomNavItem>(BottomNavItem.Home) }
-                var cocktails by remember { mutableStateOf<List<Cocktail>>(emptyList()) }
-                var isLoading by remember { mutableStateOf(true) }
+            val coroutineScope = rememberCoroutineScope()
+            var cocktails by remember { mutableStateOf<List<Cocktail>>(emptyList()) }
+            var isLoading by remember { mutableStateOf(true) }
+            var hasError by remember { mutableStateOf(false) }
+            val pagerState = rememberPagerState(pageCount = { 3 })
+            val navItems = listOf(
+                BottomNavItem.Home,
+                BottomNavItem.Favorites,
+                BottomNavItem.Settings
+            )
+            val favoritesManager = remember { FavoritesManager(this) }
+            var searchQuery by remember { mutableStateOf("") }
 
-                val refreshCocktails = {
-                    isLoading = true
-                    CoroutineScope(Dispatchers.Main).launch {
-                        cocktails = cocktailRepository.getRandomCocktails()
+            // Funkcja do ładowania danych
+            fun loadData() {
+                isLoading = true
+                hasError = false
+                lifecycleScope.launch {
+                    try {
+                        val results = if (searchQuery.isNotBlank()) {
+                            cocktailRepository.searchCocktails(this@MainActivity, searchQuery)
+                        } else {
+                            cocktailRepository.getRandomCocktails(10)
+                        }
+
+                        // Sprawdzamy czy lista jest pusta
+                        if (results.isEmpty()) {
+                            hasError = true
+                        } else {
+                            cocktails = results
+                        }
+                        isLoading = false
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "Błąd pobierania danych: ${e.message}")
+                        hasError = true
                         isLoading = false
                     }
-                    Unit
                 }
-                LaunchedEffect(key1 = true) {
-                    isLoading = true
-                    cocktails = cocktailRepository.getRandomCocktails()
-                    isLoading = false
-                }
+            }
 
+            // Początkowe ładowanie danych
+            LaunchedEffect(key1 = true) {
+                loadData()
+            }
+
+            CocktailsAppTheme {
                 Scaffold(
                     topBar = {
                         CenterAlignedTopAppBar(
@@ -137,56 +215,184 @@ class MainActivity : ComponentActivity() {
                     },
                     bottomBar = {
                         NavigationBar {
-                            val navItems = listOf(
-                                BottomNavItem.Home,
-                                BottomNavItem.Favorites,
-                                BottomNavItem.Settings
-                            )
-                            navItems.forEach { item ->
+                            navItems.forEachIndexed { index, item ->
                                 NavigationBarItem(
                                     icon = { Icon(item.icon, contentDescription = item.title) },
                                     label = { Text(item.title) },
-                                    selected = selectedNavItem == item,
-                                    onClick = { selectedNavItem = item }
+                                    selected = pagerState.currentPage == index,
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    }
                                 )
                             }
                         }
                     }
                 ) { paddingValues ->
-                    when (selectedNavItem) {
-                        BottomNavItem.Home -> {
-                            if (isLoading) {
-                                Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                                    CircularProgressIndicator(modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
-                                }
-                            } else {
-                                MainScreen(
-                                    cocktailList = cocktails,
-                                    paddingValues = paddingValues,
-                                    onCocktailClick = { selectedCocktail ->
-                                        val intent = Intent(this@MainActivity, DetailsActivity::class.java)
-                                        intent.putExtra("cocktailName", selectedCocktail.name)
-                                        startActivity(intent)
-                                    },
-                                    onRefresh = refreshCocktails
-                                )
-                            }
-                        }
-                        BottomNavItem.Favorites -> {
-                            FavouritesScreen(paddingValues)
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        when (page) {
+                            0 -> { // Home
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(paddingValues)
+                                ) {
+                                    // Pole wyszukiwania
+                                    OutlinedTextField(
+                                        value = searchQuery,
+                                        onValueChange = { searchQuery = it },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                                        placeholder = { Text("Szukaj koktajli...") },
+                                        trailingIcon = {
+                                            Row {
+                                                IconButton(onClick = {
+                                                    if (searchQuery.isNotBlank()) {
+                                                        loadData()
+                                                    }
+                                                }) {
+                                                    Icon(Icons.Default.Search, contentDescription = "Szukaj")
+                                                }
+                                                if (searchQuery.isNotBlank()) {
+                                                    IconButton(onClick = {
+                                                        searchQuery = ""
+                                                        loadData()
+                                                    }) {
+                                                        Icon(Icons.Default.Refresh, contentDescription = "Wyczyść")
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                        ),
+                                        singleLine = true
+                                    )
 
-                        }
-                        BottomNavItem.Settings -> {
-                            Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                                Text(
-                                    text = "Tutaj będą ustawienia",
-                                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center)
-                                )
+                                    when {
+                                        isLoading -> {
+                                            Box(modifier = Modifier.fillMaxSize()) {
+                                                CocktailLoadingAnimation(modifier = Modifier.align(Alignment.Center))
+                                            }
+                                        }
+                                        hasError -> {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement = Arrangement.Center,
+                                                    modifier = Modifier.padding(16.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.WifiOff,
+                                                        contentDescription = "Brak połączenia",
+                                                        modifier = Modifier.size(100.dp),
+                                                        tint = MaterialTheme.colorScheme.error
+                                                    )
+                                                    Spacer(modifier = Modifier.height(16.dp))
+                                                    Text(
+                                                        text = "Błąd pobierania danych",
+                                                        style = MaterialTheme.typography.titleLarge,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    Text(
+                                                        text = "Sprawdź swoje połączenie z internetem i spróbuj ponownie",
+                                                        style = MaterialTheme.typography.bodyLarge,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                    Spacer(modifier = Modifier.height(24.dp))
+                                                    androidx.compose.material3.Button(
+                                                        onClick = { loadData() },
+                                                        modifier = Modifier.padding(8.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Refresh,
+                                                            contentDescription = "Odśwież"
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text("Spróbuj ponownie")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else -> {
+                                            // Zawartość koktajli
+                                            LazyVerticalGrid(
+                                                columns = GridCells.Fixed(2),
+                                                contentPadding = PaddingValues(8.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                                modifier = Modifier.fillMaxSize()
+                                            ) {
+                                                if (searchQuery.isNotBlank()) {
+                                                    item(span = { GridItemSpan(2) }) {
+                                                        Text(
+                                                            text = "Wyniki dla: \"$searchQuery\"",
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            modifier = Modifier.padding(vertical = 8.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                items(items = cocktails) { cocktail ->
+                                                    CocktailGridItem(
+                                                        cocktail = cocktail,
+                                                        onClick = {
+                                                            val intent = Intent(this@MainActivity, DetailsActivity::class.java)
+                                                            intent.putExtra("cocktailName", cocktail.name)
+                                                            startActivity(intent)
+                                                        },
+                                                        isFavorite = favoritesManager.isFavorite(cocktail),
+                                                        onFavoriteToggle = { favoritesManager.toggleFavorite(it) }
+                                                    )
+                                                }
+                                                item(span = { GridItemSpan(2) }) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(16.dp),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        androidx.compose.material3.Button(
+                                                            onClick = {
+                                                                searchQuery = ""
+                                                                loadData()
+                                                            },
+                                                            modifier = Modifier.fillMaxWidth(0.7f)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Refresh,
+                                                                contentDescription = "Odśwież"
+                                                            )
+                                                            Spacer(modifier = Modifier.width(8.dp))
+                                                            Text("Losowe koktajle")
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            1 -> { // Favorites
+                                FavouritesScreen(paddingValues)
+                            }
+                            2 -> { // Settings
+                                SettingsScreen(paddingValues)
                             }
                         }
                     }
                 }
-
             }
         }
     }
@@ -249,7 +455,6 @@ fun MainScreen(
                 if (newQuery.isNotEmpty()) {
                     isSearching = true
 
-                    // Uruchomienie wyszukiwania z użyciem rememberCoroutineScope
                     coroutineScope.launch(Dispatchers.IO) {
                         val results = cocktailRepository.searchCocktails(context, newQuery)
                         withContext(Dispatchers.Main) {
@@ -278,37 +483,42 @@ fun MainScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp
+                CocktailLoadingAnimation(
+                    modifier = Modifier.size(80.dp),
+                    size = 80.dp
                 )
             }
         }
 
-        LazyColumn {
-            items(if (searchQuery.isEmpty()) cocktailList else searchResults) { cocktail ->
+        // Zmieniamy LazyColumn na LazyVerticalGrid
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            items(items = if (searchQuery.isEmpty()) cocktailList else searchResults) { cocktail ->
                 val isFavorite = favoritesManager.isFavorite(cocktail)
-                CocktailListItem(
+                CocktailGridItem(
                     cocktail = cocktail,
                     onClick = { onCocktailClick(cocktail) },
                     isFavorite = isFavorite,
                     onFavoriteToggle = { cocktail ->
                         favoritesManager.toggleFavorite(cocktail)
-                        // Odświeżenie listy ulubionych
                         favoritesList = favoritesManager.getFavorites()
                     }
                 )
             }
-
-            // Przycisk odświeżania na końcu listy
-            item {
+            // Przycisk odświeżania jako ostatni element listy
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 8.dp, vertical = 8.dp)
                         .clickable { onRefresh() },
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
@@ -333,10 +543,9 @@ fun MainScreen(
                         )
                     }
                 }
-                // Dodajemy padding na końcu listy
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
+
     }
 }
 
@@ -412,5 +621,62 @@ fun CocktailImage(cocktail: Cocktail, modifier: Modifier = Modifier) {
     } else {
         // Placeholder
         Box(modifier.background(Color.LightGray))
+    }
+}
+
+@Composable
+fun CocktailGridItem(
+    cocktail: Cocktail,
+    onClick: (Cocktail) -> Unit,
+    isFavorite: Boolean,
+    onFavoriteToggle: (Cocktail) -> Unit
+) {
+    var currentFavoriteState by remember(cocktail.name, isFavorite) { mutableStateOf(isFavorite) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(0.7f) // Proporcje karty
+            .clickable { onClick(cocktail) },
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column {
+            // Obrazek na górze karty, zajmujący większość miejsca
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                CocktailImage(
+                    cocktail = cocktail,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Ikona ulubionych w rogu obrazka
+                IconButton(
+                    onClick = {
+                        onFavoriteToggle(cocktail)
+                        currentFavoriteState = !currentFavoriteState  },
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Icon(
+                        imageVector = if (currentFavoriteState) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = if (currentFavoriteState) "Usuń z ulubionych" else "Dodaj do ulubionych",
+                        tint = if (currentFavoriteState) Color.Red else Color.Gray
+                    )
+                }
+            }
+
+            // Tekst na dole karty
+            Text(
+                text = cocktail.name,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            )
+        }
     }
 }

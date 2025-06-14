@@ -72,37 +72,5 @@ data class CocktailDto(
         }
     }
 
-    // Zaktualizowana metoda toCocktail przyjmująca tłumaczenia
-    fun toCocktail(
-        translatedDescription: String? = null,
-        translatedIngredients: List<String>? = null
-    ): Cocktail {
-        // Oryginalne dane
-        val originalIngredients = collectIngredients()
-        val originalDescription = strInstructions ?: ""
 
-        // Uzupełnianie brakujących tłumaczeń
-        val finalIngredients = translatedIngredients?.mapIndexed { index, translated ->
-            val original = originalIngredients.getOrNull(index).orEmpty()
-            if (translated.isNullOrBlank()) {
-                original
-            } else if (original.isNotBlank() && !translated.contains(original)) {
-                "$translated ($original)"
-            } else {
-                translated
-            }
-        } ?: originalIngredients
-
-        return Cocktail(
-            name = strDrink,
-            ingredients = finalIngredients,
-            originalIngredients = originalIngredients,
-            translatedIngredients = finalIngredients,
-            description = translatedDescription ?: originalDescription,
-            originalDescription = originalDescription,
-            translatedDescription = translatedDescription,
-            timerSeconds = null,
-            imageUrl = strDrinkThumb
-        )
-    }
 }

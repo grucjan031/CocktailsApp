@@ -38,6 +38,12 @@ import androidx.compose.ui.graphics.Color
 import coil.compose.AsyncImage
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 
 private const val PREFS_NAME = "CocktailNotes"
 private const val NOTE_KEY_PREFIX = "note_"
@@ -99,7 +105,7 @@ class DetailsActivity : ComponentActivity() {
 
                 if (isLoading) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        CocktailLoadingAnimation(modifier = Modifier.align(Alignment.Center))
                     }
                 } else {
                     selectedCocktail?.let {
@@ -120,7 +126,6 @@ fun DetailsScreen(
     val context = LocalContext.current
     var useTranslation by remember { mutableStateOf(false) }
     var notes by rememberSaveable { mutableStateOf(getNoteForCocktail(context, selectedCocktail.name)) }
-    // Stan kontrolujący widoczność minutnika
     var isTimerVisible by rememberSaveable { mutableStateOf(false) }
 
     Surface(color = MaterialTheme.colorScheme.background) {
@@ -134,6 +139,41 @@ fun DetailsScreen(
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                 )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        val ingredients = selectedCocktail.getLocalizedIngredients(useTranslation)
+                        val message = buildString {
+                            append("Składniki koktajlu ${selectedCocktail.name}:\n\n")
+                            ingredients.forEachIndexed { index, ingredient ->
+                                append("${index + 1}. $ingredient\n")
+                            }
+                        }
+
+                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("smsto:")
+                            putExtra("sms_body", message)
+                        }
+
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(
+                                context,
+                                "Brak aplikacji do wysyłania SMS",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "Wyślij składniki",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         ) { paddingValues ->
             Column(
